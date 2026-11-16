@@ -6,6 +6,11 @@ root.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(
  else if(a==="user"){S.menu=!S.menu;render()}
  else if(a==="logout"){try{await sb.auth.signOut()}catch(x){}S.user="";S.email="";S.admin=false;S.uid="tamu";S.menu=false;render()}
  else if(a==="retry2")loadDb()
+ else if(a==="import")importArea()
+ else if(a==="mcx"){S.peek=null;sheet();drawMap()}
+ else if(a==="mnx"){const c=S.cafes.find(x=>x.id===S.peek),n=c?(c.photos||[]).length:0;if(n){S.pi=((S.pi||0)+ +b.dataset.d+n)%n;sheet()}}
+ else if(a==="zin"){if(S.map)S.map.zoomIn()}
+ else if(a==="zout"){if(S.map)S.map.zoomOut()}
  else if(a==="rs"){const k=b.dataset.k,s=+b.dataset.s;S.rv[k]=S.rv[k]===s?0:s;b.parentElement.querySelectorAll("button").forEach(x=>x.classList.toggle("on",+x.dataset.s<=S.rv[k]))}
  else if(a==="sendrv"){gate(async()=>{const t=document.getElementById("rt");if(t)S.rv.text=t.value;if(!S.rv.stars)return alert("Pilih bintang keseluruhan dulu.");const c=S.cafes.find(x=>x.id===S.sel);if(!c||!sb)return;try{const id=await ensureDb(c);const r=await sb.from("ratings").upsert({cafe_id:id,user_id:S.uid,stars:S.rv.stars,service:S.rv.service||null,food:S.rv.food||null,worth:S.rv.worth||null,comment:(S.rv.text||"").trim().slice(0,1000)||null,author:S.user.slice(0,2)+"•••"},{onConflict:"cafe_id,user_id"});if(r.error)throw r.error;S.sel=id;S.rvFor=null;await loadDb();render()}catch(e){alert("Gagal menyimpan ulasan: "+(e.message||e))}})}
  else if(a==="delrv"){const c=S.cafes.find(x=>x.id===S.sel);if(!c||!c.dbId||!confirm("Hapus ulasan ini?"))return;const r=await sb.from("ratings").delete().eq("cafe_id",c.dbId).eq("user_id",b.dataset.u);if(r.error)return alert("Gagal menghapus: "+r.error.message);S.rvFor=null;await loadDb()}
@@ -17,14 +22,14 @@ root.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(
  else if(a==="sl"){b.closest(".sec").querySelector(".rs").scrollBy({left:+b.dataset.d*480,behavior:"smooth"})}
  else if(a==="reg"){S.region=b.dataset.r;S.fo=false;render();scrollTo(0,0)}
  else if(a==="reset"){S.region="Semua";S.budget="Semua";S.q="";render()}
- else if(a==="home"){S.view="home";S.pick=false;S.editId=null;render()}
+ else if(a==="home"){S.view="home";S.pick=false;S.editId=null;S.sv=null;render()}
  else if(a==="open"){S.sel=b.dataset.id;S.view="detail";S.pick=false;render();scrollTo(0,0)}
  else if(a==="fo"){S.fo=!S.fo;render()}
  else if(a==="bud"){S.budget=b.dataset.k;render()}
  else if(a==="loc"){getLoc();render()}
  else if(a==="map"){S.view="map";S.peek=null;S.pick=false;render()}
- else if(a==="add"){gate(()=>{S.draft={};S.pt=null;S.photos=[];S.mphotos=[];S.editId=null;S.view="add";render()})}
- else if(a==="edit"){gate(()=>{const c=S.cafes.find(x=>x.id===S.sel);S.draft={menu:""};S.pt={lat:c.lat,lng:c.lng};S.photos=[];S.mphotos=[];S.editId=c.id;S.view="add";render()})}
+ else if(a==="add"){gate(()=>{S.draft={};S.pt=null;S.photos=[];S.mphotos=[];S.editId=null;S.sv=null;S.view="add";render()})}
+ else if(a==="edit"){gate(()=>{const c=S.cafes.find(x=>x.id===S.sel);S.draft={menu:""};S.pt={lat:c.lat,lng:c.lng};S.photos=[];S.mphotos=[];S.editId=c.id;S.sv=null;S.view="add";render()})}
  else if(a==="useme"){collect();if(S.near){S.pt={lat:+S.near.lat.toFixed(5),lng:+S.near.lng.toFixed(5)};render()}else alert("Lokasimu belum tersedia. Izinkan akses lokasi dulu.")}
  else if(a==="pickmap"){collect();S.pick=true;S.view="map";render()}
  else if(a==="save")save();
