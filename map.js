@@ -4,13 +4,13 @@ function viewMap(){
  S.map=null;root.innerHTML=`<div id="mapv"><div class="mtop"><button class="rb0" data-a="home" aria-label="Kembali">←</button><b id="mt" class="mtt">${S.pick?"Pilih lokasi cafe":"Peta cafe"}</b>${S.pick?"":`<button data-a="add">+ Tambah</button>`}</div><div id="mw"><div id="lm"></div>${S.pick?`<div id="hint">Ketuk peta untuk menaruh titik cafe</div>`:`<button id="area" class="pillb" data-a="area">Cari di area ini</button>`}<div class="mctl"><button class="rb0" data-a="me" aria-label="Ke lokasiku">➤</button><div class="zg"><button data-a="zin" aria-label="Perbesar">+</button><button data-a="zout" aria-label="Perkecil">−</button></div></div><div id="sheet"></div></div></div>`;drawMap();sheet()
 }
 
-function pillIcon(c,cls){const a=avg(c),nm=c.name.length>16?c.name.slice(0,15)+"…":c.name;return L.divIcon({className:"mk "+cls,html:"<span>"+esc(nm)+(a?" · ★ "+a.toFixed(1):"")+"</span>",iconSize:[0,0]})}
+function pillIcon(c,cls){const a=avg(c),nm=c.name.length>24?c.name.slice(0,23)+"…":c.name;return L.divIcon({className:"mk "+cls,html:"<span>"+esc(nm)+(a?" · ★ "+a.toFixed(1):"")+"</span>",iconSize:[0,0]})}
 
 function drawMap(){
  if(!window.L){const e=$("#lm");if(e)e.innerHTML='<p style="padding:16px">Peta gagal dimuat. Cek koneksi internet.</p>';return}
  if(!S.map){const v=S.mv||(S.near?{c:[S.near.lat,S.near.lng],z:15}:{c:[-2.5,118],z:5});
   S.map=L.map("lm",{zoomControl:false}).setView(v.c,v.z);
-  L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",{subdomains:"abcd",maxZoom:20,attribution:"© OpenStreetMap © CARTO"}).addTo(S.map);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(S.map);
   S.layer=L.layerGroup().addTo(S.map);
   S.map.on("moveend",()=>{const c=S.map.getCenter();S.mv={c:[c.lat,c.lng],z:S.map.getZoom()};clearTimeout(S.mt);S.mt=setTimeout(autoPull,700)});
   S.map.on("zoomend",()=>drawMap());
