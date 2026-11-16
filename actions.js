@@ -7,6 +7,7 @@ root.addEventListener("click",async e=>{const b=e.target.closest("[data-a]");if(
  else if(a==="logout"){try{await sb.auth.signOut()}catch(x){}S.user="";S.email="";S.admin=false;S.uid="tamu";S.menu=false;render()}
  else if(a==="retry2")loadDb()
  else if(a==="import")importArea()
+ else if(a==="sql")sqlArea()
  else if(a==="mcx"){S.peek=null;sheet();drawMap()}
  else if(a==="mnx"){const c=S.cafes.find(x=>x.id===S.peek),n=c?(c.photos||[]).length:0;if(n){S.pi=((S.pi||0)+ +b.dataset.d+n)%n;sheet()}}
  else if(a==="zin"){if(S.map)S.map.zoomIn()}
