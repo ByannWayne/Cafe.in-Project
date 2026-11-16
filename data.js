@@ -9,18 +9,33 @@ function fromOsm(e){const t=e.tags||{},la=e.lat??e.center.lat,ln=e.lon??e.center
  desc:"Cafe terdaftar di OpenStreetMap."+(t.cuisine?" Sajian: "+t.cuisine+".":"")+" Menu dan foto belum ada, tambahkan lewat tombol di bawah.",phone:t.phone||t["contact:phone"]||"",website:t.website||t["contact:website"]||(t["contact:instagram"]?"@"+t["contact:instagram"].replace(/^@/,""):""),hours:t.opening_hours||"",features:[/^(wlan|wifi|yes)$/.test(t.internet_access||"")?"WiFi":"",t.outdoor_seating==="yes"?"Area outdoor":"",t.indoor_seating==="yes"?"Indoor":"",/^(yes|only)$/.test(t.takeaway||"")?"Bawa pulang":"",t.air_conditioning==="yes"?"AC":"",t.wheelchair==="yes"?"Ramah kursi roda":""].filter(Boolean),
  lat:la,lng:ln,menu:[],photos:[],ratings:{},video:"",by:"osm"}}
 
-async function pull(q){S.busy=true;S.err="";upd();let why="",ok=false;
- const qs=`[out:json][timeout:12];(nwr["amenity"="cafe"]["name"](${q});nwr["shop"="coffee"]["name"](${q}););out center 150;`;
- const one=async u=>{const ac=new AbortController(),t=setTimeout(()=>ac.abort(),12000);
+async function pull(q){S.busy=true;S.err="";S.tryN=1;upd();let why="",ok=false;
+ const qs=`[out:json][timeout:25];(node["amenity"="cafe"]["name"](${q});way["amenity"="cafe"]["name"](${q}););out center 120;`;
+ const one=async u=>{const ac=new AbortController(),t=setTimeout(()=>ac.abort(),25000);
   try{const r=await fetch(u,{method:"POST",signal:ac.signal,headers:{"Content-Type":"application/x-www-form-urlencoded"},body:"data="+encodeURIComponent(qs)});
    if(!r.ok)throw new Error("HTTP "+r.status);const j=await r.json();if(!j.elements)throw new Error("respon kosong");return j}
   finally{clearTimeout(t)}};
- try{const j=await Promise.any(OVP.map(one));
-  for(const e of j.elements){const id="osm"+e.type[0]+e.id;if(!S.osm.some(c=>c.id===id))S.osm.push(fromOsm(e))}
-  persist();build();ok=true}
- catch(x){why=(x.errors||[x]).map(e=>e.name==="AbortError"?"waktu habis":e.message).join(", ")}
- if(!ok){build();S.err="Gagal memuat cafe asli dari OpenStreetMap ("+why+"). "+(S.cafes.some(c=>c.by==="seed")?"Sementara yang tampil data contoh.":"")}
+ for(let k=0;k<3&&!ok;k++){
+  if(k){S.tryN=k+1;upd();await new Promise(r=>setTimeout(r,3000*k))}
+  try{const j=await Promise.any(OVP.map(one));
+   for(const e of j.elements){const id="osm"+e.type[0]+e.id;if(!S.osm.some(c=>c.id===id))S.osm.push(fromOsm(e))}
+   persist();build();ok=true}
+  catch(x){why=(x.errors||[x]).map(e=>e.name==="AbortError"?"waktu habis":e.message).join(", ")}}
+ S.tryN=0;
+ if(!ok){build();const have=S.cafes.some(c=>c.by!=="seed");S.err="Server OpenStreetMap sedang sibuk ("+why+"). "+(have?"Cafe yang sudah tersimpan tetap ditampilkan.":"Sementara yang tampil data contoh.")}
  S.busy=false;upd()}
+
+// Khusus admin: simpan cafe OpenStreetMap di area peta ke database, supaya semua pengguna memuatnya dari database.
+async function importArea(){const m=S.map;if(!m||!sb||!S.admin)return;const b=m.getBounds(),s=b.getSouth(),w=b.getWest(),n=b.getNorth(),e=b.getEast();
+ const list=S.cafes.filter(c=>!c.dbId&&c.by==="osm"&&c.lat>=s&&c.lat<=n&&c.lng>=w&&c.lng<=e);
+ if(!list.length)return alert("Tidak ada cafe OpenStreetMap baru di area ini. Zoom ke level kecamatan atau kota, tekan “Cari di area ini”, tunggu sampai titiknya muncul, lalu coba lagi.");
+ if(!confirm("Simpan "+list.length+" cafe di area peta ini ke database? Setelah itu semua pengguna memuatnya langsung dari database, tanpa menunggu server OpenStreetMap."))return;
+ const rows=list.map(c=>({osm_id:c.id,name:c.name.slice(0,80),city:c.city,address:c.address||null,description:c.desc||null,phone:c.phone||null,website:c.website||null,hours:c.hours||null,features:c.features||[],lat:c.lat,lng:c.lng}));
+ const btn=$("#imp");
+ try{for(let i=0;i<rows.length;i+=100){if(btn)btn.textContent="Menyimpan "+Math.min(i+100,rows.length)+" dari "+rows.length+"…";const r=await sb.from("cafes").upsert(rows.slice(i,i+100),{onConflict:"osm_id",ignoreDuplicates:true});if(r.error)throw r.error}
+  await loadDb();alert(rows.length+" cafe tersimpan ke database.")}
+ catch(x){alert("Gagal menyimpan: "+(x.message||x))}
+ if(btn)btn.textContent="Simpan cafe area ini ke database"}
 
 function autoPull(){const m=S.map;if(!m||S.pick||S.busy||m.getZoom()<14)return;const c=m.getCenter();if(S.lc&&km(S.lc.lng,S.lc.lat,c.lng,c.lat)<0.8)return;S.lc={lat:c.lat,lng:c.lng};const b=m.getBounds();pull([b.getSouth(),b.getWest(),b.getNorth(),b.getEast()].join(","))}
 
