@@ -58,3 +58,17 @@ function build(){const by={},osm={},L=[];
  S.cafes=L.length?L:SEED.map(c=>({...c}))}
 
 async function loadDb(){if(!sb)return;try{const q=t=>sb.from(t).select("*").limit(1000);const R=await Promise.all([q("cafes"),q("menu_items"),q("photos"),q("ratings")]);const e=R.find(x=>x.error);if(e)throw e.error;S.db={cafes:R[0].data,menu:R[1].data,photos:R[2].data,ratings:R[3].data};S.dbErr=""}catch(x){S.dbErr="Tidak bisa terhubung ke database ("+(x.message||"error")+")."}build();upd()}
+
+// Khusus admin: ubah cafe OpenStreetMap di area peta menjadi SQL (untuk ditempel di Supabase SQL Editor).
+function sqlArea(){const m=S.map;if(!m||!S.admin)return;const b=m.getBounds(),s=b.getSouth(),w=b.getWest(),n=b.getNorth(),e=b.getEast();
+ const list=S.cafes.filter(c=>!c.dbId&&c.by==="osm"&&c.lat>=s&&c.lat<=n&&c.lng>=w&&c.lng<=e);
+ if(!list.length)return alert("Tidak ada cafe OpenStreetMap baru di area ini. Zoom ke level kecamatan atau kota, tekan “Cari di area ini”, tunggu sampai titiknya muncul, lalu coba lagi.");
+ const q=t=>t==null||t===""?"null":"'"+String(t).replace(/'/g,"''")+"'";
+ const arr=a=>"'{"+(a||[]).map(x=>'"'+String(x).replace(/(["\\])/g,"\\$1")+'"').join(",")+"}'::text[]";
+ const vals=list.map(c=>"  ("+[q(c.id),q(c.name.slice(0,80)),q(c.city),q(c.address),q(c.desc),q(c.phone),q(c.website),q(c.hours),arr(c.features),c.lat,c.lng].join(", ")+")").join(",\n");
+ const sql="-- "+list.length+" cafe dari OpenStreetMap. Aman dijalankan berulang (yang sudah ada dilewati).\ninsert into public.cafes (osm_id, name, city, address, description, phone, website, hours, features, lat, lng, created_by)\nselect v.*, a.id\nfrom (values\n"+vals+"\n) as v(osm_id, name, city, address, description, phone, website, hours, features, lat, lng)\ncross join (select id from public.profiles where role = 'admin' limit 1) a\non conflict (osm_id) do nothing;";
+ const o=document.createElement("div");o.id="sqlbox";
+ o.innerHTML='<div class="sqlm"><b>SQL siap dijalankan ('+list.length+' cafe)</b><p class="mute">Salin semuanya, buka Supabase → SQL Editor → New query, tempel, lalu klik Run.</p><textarea readonly></textarea><div class="row" style="margin-top:10px"><button class="p" id="sqlcopy">Salin SQL</button><button id="sqlclose">Tutup</button></div></div>';
+ document.body.appendChild(o);const ta=o.querySelector("textarea");ta.value=sql;
+ o.querySelector("#sqlclose").onclick=()=>o.remove();
+ o.querySelector("#sqlcopy").onclick=async()=>{ta.select();try{await navigator.clipboard.writeText(sql);o.querySelector("#sqlcopy").textContent="Tersalin ✓"}catch(x){document.execCommand("copy");o.querySelector("#sqlcopy").textContent="Tersalin ✓"}}}
