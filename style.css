@@ -131,3 +131,7 @@ h1{font-size:24px}}
 
 /* peta dasar dibuat abu-abu supaya titik cafe menonjol dan serasi dengan tema hitam putih */
 .leaflet-tile-pane{filter:grayscale(1) brightness(1.05) contrast(.92)}
+
+#sqlbox{position:fixed;inset:0;z-index:3000;background:rgba(0,0,0,.5);display:grid;place-items:center;padding:12px}
+.sqlm{background:var(--pn);border-radius:14px;padding:16px;width:min(760px,100%)}
+.sqlm textarea{width:100%;height:50vh;font:12px/1.4 ui-monospace,Menlo,Consolas,monospace;white-space:pre}
