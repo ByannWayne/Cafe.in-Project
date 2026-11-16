@@ -26,4 +26,4 @@ function viewDetail(){
 }
 
 function miniMap(c){const e=document.getElementById("dm");if(!e||!window.L)return;try{if(S.dmap){S.dmap.remove();S.dmap=null}}catch(x){S.dmap=null}
- const m=L.map(e,{zoomControl:false,scrollWheelZoom:false}).setView([c.lat,c.lng],16);L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",{subdomains:"abcd",maxZoom:20,attribution:"© OpenStreetMap © CARTO"}).addTo(m);L.circleMarker([c.lat,c.lng],{radius:10,color:"#fff",weight:3,fillColor:"#111",fillOpacity:1}).addTo(m);S.dmap=m}
+ const m=L.map(e,{zoomControl:false,scrollWheelZoom:false}).setView([c.lat,c.lng],16);L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(m);L.circleMarker([c.lat,c.lng],{radius:10,color:"#fff",weight:3,fillColor:"#111",fillOpacity:1}).addTo(m);S.dmap=m}
